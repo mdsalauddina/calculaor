@@ -89,7 +89,7 @@
             const [copied, setCopied] = useState(false);
 
             useEffect(() => {
-                const saved = localStorage.getItem('pkj_calc_github_v1');
+                const saved = localStorage.getItem('pkj_calc_github_v2');
                 if (saved) setHistory(JSON.parse(saved));
             }, []);
 
@@ -97,21 +97,33 @@
                 const totalBus = (Number(data.busCost) || 0) + (Number(data.tollTipCost) || 0);
                 const guests = Number(data.totalGuests) || 0;
                 
-                if (guests === 0) return { totalBus, regBus: 0, d1Bus: 0, d2Bus: 0, otherPP: 0, totalReg: 0, totalD1: 0, totalD2: 0 };
+                if (guests === 0) return { totalBus, basicFare: 0, regBus: 0, d1Bus: 0, d2Bus: 0, otherPP: 0, totalReg: 0, totalD1: 0, totalD2: 0 };
 
-                const gap = (Number(data.discount1Guests) * Number(data.discount1Amount)) + 
-                            (Number(data.discount2Guests) * Number(data.discount2Amount));
+                // ১. বেসিক ভাড়া
+                const basicFare = Math.ceil(totalBus / guests);
 
-                const regBus = Math.ceil((totalBus + gap) / guests);
-                const d1Bus = regBus - (Number(data.discount1Amount) || 0);
-                const d2Bus = regBus - (Number(data.discount2Amount) || 0);
+                // ২. ডিসকাউন্ট গ্যাপ হিসাব
+                const gap1 = Number(data.discount1Guests) * Number(data.discount1Amount);
+                const gap2 = Number(data.discount2Guests) * Number(data.discount2Amount);
+                const totalGap = gap1 + gap2;
+
+                // ৩. রেগুলার গেস্ট সংখ্যা
+                const regularGuests = guests - (Number(data.discount1Guests) || 0) - (Number(data.discount2Guests) || 0);
+
+                // ৪. রেগুলার সিট ভাড়া = বেসিক ভাড়া + (গ্যাপ / রেগুলার গেস্ট)
+                const regBusAddon = regularGuests > 0 ? Math.ceil(totalGap / regularGuests) : 0;
+                const regBus = basicFare + regBusAddon;
+
+                // ৫. ডিসকাউন্ট সিট ভাড়া = বেসিক ভাড়া - ডিসকাউন্ট অ্যামাউন্ট
+                const d1Bus = basicFare - (Number(data.discount1Amount) || 0);
+                const d2Bus = basicFare - (Number(data.discount2Amount) || 0);
 
                 const otherPP = data.otherExpenses.reduce((acc, ex) => {
                     return acc + (ex.guestCount > 0 ? Math.ceil(Number(ex.totalAmount) / Number(ex.guestCount)) : 0);
                 }, 0);
 
                 return { 
-                    totalBus, regBus, d1Bus, d2Bus, otherPP, 
+                    totalBus, basicFare, regBus, d1Bus, d2Bus, otherPP, 
                     totalReg: regBus + otherPP, 
                     totalD1: d1Bus + otherPP,
                     totalD2: d2Bus + otherPP
@@ -122,18 +134,27 @@
                 if (!data.tourName) return alert('ট্যুরের নাম দিন');
                 const updated = [{...data, id: Date.now()}, ...history].slice(0, 20);
                 setHistory(updated);
-                localStorage.setItem('pkj_calc_github_v1', JSON.stringify(updated));
+                localStorage.setItem('pkj_calc_github_v2', JSON.stringify(updated));
                 alert('সেভ করা হয়েছে!');
             };
 
             const copyText = () => {
-                const basicPP = data.totalGuests > 0 ? (results.totalBus / data.totalGuests).toFixed(2) : '0';
                 const otherDetails = data.otherExpenses.map(ex => {
                     const pp = ex.guestCount > 0 ? Math.ceil(ex.totalAmount / ex.guestCount) : 0;
                     return `${ex.name} ${ex.totalAmount}÷${ex.guestCount}= ${pp}`;
                 }).join('\n');
 
-                const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\nবাস ও আনুষঙ্গিক: ${results.totalBus}\nমোট গেস্ট: ${data.totalGuests}\n\nবেসিক ভাড়া: ${results.totalBus}/${data.totalGuests} = ${basicPP}\n\nরেগুলার সিট: ${results.regBus}\n${data.discount1Guests > 0 ? `ডিসকাউন্ট সিট ১: ${results.d1Bus}\n` : ''}${data.discount2Guests > 0 ? `ডিসকাউন্ট সিট ২: ${results.d2Bus}\n` : ''}\n${otherDetails}\n\nমুল সিট জনপ্রতি: ${results.totalReg}\n${data.discount1Guests > 0 ? `ডিসকাউন্ট ১ জনপ্রতি: ${results.totalD1}\n` : ''}${data.discount2Guests > 0 ? `ডিসকাউন্ট ২ জনপ্রতি: ${results.totalD2}` : ''}`;
+                const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\n` +
+                    `বাস ও আনুষঙ্গিক: ${results.totalBus}\n` +
+                    `মোট গেস্ট: ${data.totalGuests}\n\n` +
+                    `বেসিক ভাড়া: ${results.totalBus}/${data.totalGuests} = ${results.basicFare}\n\n` +
+                    `রেগুলার সিট: ${results.regBus}\n` +
+                    `${data.discount1Guests > 0 ? `ডিসকাউন্ট সিট ১: ${results.d1Bus}\n` : ''}` +
+                    `${data.discount2Guests > 0 ? `ডিসকাউন্ট সিট ২: ${results.d2Bus}\n` : ''}\n` +
+                    `${otherDetails}\n\n` +
+                    `মুল সিট জনপ্রতি: ${results.totalReg}\n` +
+                    `${data.discount1Guests > 0 ? `ডিসকাউন্ট ১ জনপ্রতি: ${results.totalD1}\n` : ''}` +
+                    `${data.discount2Guests > 0 ? `ডিসকাউন্ট ২ জনপ্রতি: ${results.totalD2}` : ''}`;
 
                 const el = document.createElement('textarea');
                 el.value = summary;
@@ -151,7 +172,7 @@
                     {/* Header */}
                     <header className="bg-[#1e1b4b] text-white p-5 flex justify-between items-center shadow-xl sticky top-0 z-50">
                         <div className="flex items-center gap-2">
-                            <div className="bg-indigo-500 p-1.5 rounded-lg">
+                            <div className="bg-indigo-500 p-1.5 rounded-lg shadow-lg">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
                             <h1 className="text-lg font-black tracking-tighter uppercase">PONKHIIRAJ</h1>
@@ -203,9 +224,9 @@
                                         </div>
                                     </div>
                                     <div className="bg-orange-100 p-4 rounded-xl border-2 border-orange-200">
-                                        <span className="text-[10px] font-black text-orange-700 uppercase mb-2 block">ডিসকাউন্ট স্লট</span>
+                                        <span className="text-[10px] font-black text-orange-700 uppercase mb-2 block">ডিসকাউন্ট স্লট ১</span>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input type="number" placeholder="প্যাক্স" value={data.discount1Guests || ''} onChange={e => setData({...data, discount1Guests: parseInt(e.target.value) || 0})} className="custom-input border-orange-300" />
+                                            <input type="number" placeholder="গেস্ট সংখ্যা" value={data.discount1Guests || ''} onChange={e => setData({...data, discount1Guests: parseInt(e.target.value) || 0})} className="custom-input border-orange-300" />
                                             <input type="number" placeholder="ছাড় (৳)" value={data.discount1Amount || ''} onChange={e => setData({...data, discount1Amount: parseInt(e.target.value) || 0})} className="custom-input border-orange-300" />
                                         </div>
                                     </div>
