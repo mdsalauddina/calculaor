@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>পঙ্খিরাজ ট্রাভেল ক্যালকুলেটর</title>
+    
+    <!-- Scripts for direct browser support -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Hind Siliguri', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #000000;
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        /* Input Visibility Fix */
+        .custom-input {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #cbd5e1 !important;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .custom-input:focus {
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .label-text {
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: block;
+            text-transform: uppercase;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const INITIAL_DATA = {
+            tourName: '',
+            date: new Date().toISOString().split('T')[0],
+            busCost: 0,
+            tollTipCost: 0,
+            totalGuests: 0,
+            discount1Guests: 0,
+            discount1Amount: 0,
+            discount2Guests: 0,
+            discount2Amount: 0,
+            otherExpenses: [
+                { id: '1', name: 'খাবার', totalAmount: 0, guestCount: 0 },
+                { id: '2', name: 'হোস্ট ফি', totalAmount: 0, guestCount: 0 }
+            ]
+        };
+
+        const App = () => {
+            const [data, setData] = useState({ ...INITIAL_DATA });
+            const [history, setHistory] = useState([]);
+            const [view, setView] = useState('calc');
+            const [copied, setCopied] = useState(false);
+
+            useEffect(() => {
+                const saved = localStorage.getItem('pkj_calc_github_v1');
+                if (saved) setHistory(JSON.parse(saved));
+            }, []);
+
+            const results = useMemo(() => {
+                const totalBus = (Number(data.busCost) || 0) + (Number(data.tollTipCost) || 0);
+                const guests = Number(data.totalGuests) || 0;
+                
+                if (guests === 0) return { totalBus, regBus: 0, d1Bus: 0, d2Bus: 0, otherPP: 0, totalReg: 0, totalD1: 0, totalD2: 0 };
+
+                const gap = (Number(data.discount1Guests) * Number(data.discount1Amount)) + 
+                            (Number(data.discount2Guests) * Number(data.discount2Amount));
+
+                const regBus = Math.ceil((totalBus + gap) / guests);
+                const d1Bus = regBus - (Number(data.discount1Amount) || 0);
+                const d2Bus = regBus - (Number(data.discount2Amount) || 0);
+
+                const otherPP = data.otherExpenses.reduce((acc, ex) => {
+                    return acc + (ex.guestCount > 0 ? Math.ceil(Number(ex.totalAmount) / Number(ex.guestCount)) : 0);
+                }, 0);
+
+                return { 
+                    totalBus, regBus, d1Bus, d2Bus, otherPP, 
+                    totalReg: regBus + otherPP, 
+                    totalD1: d1Bus + otherPP,
+                    totalD2: d2Bus + otherPP
+                };
+            }, [data]);
+
+            const saveTour = () => {
+                if (!data.tourName) return alert('ট্যুরের নাম দিন');
+                const updated = [{...data, id: Date.now()}, ...history].slice(0, 20);
+                setHistory(updated);
+                localStorage.setItem('pkj_calc_github_v1', JSON.stringify(updated));
+                alert('সেভ করা হয়েছে!');
+            };
+
+            const copyText = () => {
+                const basicPP = data.totalGuests > 0 ? (results.totalBus / data.totalGuests).toFixed(2) : '0';
+                const otherDetails = data.otherExpenses.map(ex => {
+                    const pp = ex.guestCount > 0 ? Math.ceil(ex.totalAmount / ex.guestCount) : 0;
+                    return `${ex.name} ${ex.totalAmount}÷${ex.guestCount}= ${pp}`;
+                }).join('\n');
+
+                const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\nবাস ও আনুষঙ্গিক: ${results.totalBus}\nমোট গেস্ট: ${data.totalGuests}\n\nবেসিক ভাড়া: ${results.totalBus}/${data.totalGuests} = ${basicPP}\n\nরেগুলার সিট: ${results.regBus}\n${data.discount1Guests > 0 ? `ডিসকাউন্ট সিট ১: ${results.d1Bus}\n` : ''}${data.discount2Guests > 0 ? `ডিসকাউন্ট সিট ২: ${results.d2Bus}\n` : ''}\n${otherDetails}\n\nমুল সিট জনপ্রতি: ${results.totalReg}\n${data.discount1Guests > 0 ? `ডিসকাউন্ট ১ জনপ্রতি: ${results.totalD1}\n` : ''}${data.discount2Guests > 0 ? `ডিসকাউন্ট ২ জনপ্রতি: ${results.totalD2}` : ''}`;
+
+                const el = document.createElement('textarea');
+                el.value = summary;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="min-h-screen max-w-md mx-auto bg-slate-50 flex flex-col relative pb-32">
+                    {/* Header */}
+                    <header className="bg-[#1e1b4b] text-white p-5 flex justify-between items-center shadow-xl sticky top-0 z-50">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-indigo-500 p-1.5 rounded-lg">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <h1 className="text-lg font-black tracking-tighter uppercase">PONKHIIRAJ</h1>
+                        </div>
+                        <div className="flex bg-[#2e2a5e] p-1 rounded-xl shadow-inner">
+                            <button onClick={() => setView('calc')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'calc' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিসাব</button>
+                            <button onClick={() => setView('history')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'history' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিস্ট্রি</button>
+                        </div>
+                    </header>
+
+                    <main className="p-4 space-y-4">
+                        {view === 'calc' ? (
+                            <React.Fragment>
+                                {/* Info Card */}
+                                <div className="card">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">ট্যুর ইনফো</span>
+                                        <button onClick={() => confirm('সব মুছতে চান?') && setData({...INITIAL_DATA})} className="text-rose-600 text-xs font-bold flex items-center gap-1">Reset</button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="label-text">ট্যুরের নাম</label>
+                                            <input type="text" placeholder="যেমন: বান্দরবান ডে" value={data.tourName} onChange={e => setData({...data, tourName: e.target.value})} className="custom-input" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="label-text">মোট গেস্ট</label>
+                                                <input type="number" value={data.totalGuests || ''} onChange={e => setData({...data, totalGuests: parseInt(e.target.value) || 0})} className="custom-input" />
+                                            </div>
+                                            <div>
+                                                <label className="label-text">তারিখ</label>
+                                                <input type="date" value={data.date} onChange={e => setData({...data, date: e.target.value})} className="custom-input" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bus Card */}
+                                <div className="card bg-indigo-50/50">
+                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">বাস ও ডিসকাউন্ট</span>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div>
+                                            <label className="label-text">বাস ভাড়া</label>
+                                            <input type="number" value={data.busCost || ''} onChange={e => setData({...data, busCost: parseInt(e.target.value) || 0})} className="custom-input" />
+                                        </div>
+                                        <div>
+                                            <label className="label-text">টোল/বকশিস</label>
+                                            <input type="number" value={data.tollTipCost || ''} onChange={e => setData({...data, tollTipCost: parseInt(e.target.value) || 0})} className="custom-input" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-orange-100 p-4 rounded-xl border-2 border-orange-200">
+                                        <span className="text-[10px] font-black text-orange-700 uppercase mb-2 block">ডিসকাউন্ট স্লট</span>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input type="number" placeholder="প্যাক্স" value={data.discount1Guests || ''} onChange={e => setData({...data, discount1Guests: parseInt(e.target.value) || 0})} className="custom-input border-orange-300" />
+                                            <input type="number" placeholder="ছাড় (৳)" value={data.discount1Amount || ''} onChange={e => setData({...data, discount1Amount: parseInt(e.target.value) || 0})} className="custom-input border-orange-300" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Logistics */}
+                                <div className="card">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">অন্যান্য খরচ</span>
+                                        <button onClick={() => setData({...data, otherExpenses: [...data.otherExpenses, { id: Date.now().toString(), name: '', totalAmount: 0, guestCount: data.totalGuests }]})} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-xs font-bold">যোগ করুন</button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {data.otherExpenses.map((ex, idx) => (
+                                            <div key={ex.id} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                                <div className="flex justify-between items-center">
+                                                    <input type="text" placeholder="খরচের নাম" value={ex.name} onChange={e => { const items = [...data.otherExpenses]; items[idx].name = e.target.value; setData({...data, otherExpenses: items}) }} className="bg-transparent font-bold text-sm outline-none border-b border-transparent focus:border-indigo-500 w-1/2" />
+                                                    <button onClick={() => setData({...data, otherExpenses: data.otherExpenses.filter(i => i.id !== ex.id)})} className="text-rose-500">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <input type="number" placeholder="টাকা" value={ex.totalAmount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].totalAmount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs" />
+                                                    <input type="number" placeholder="গেস্ট" value={ex.guestCount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].guestCount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        ) : (
+                            <div className="space-y-3">
+                                {history.length === 0 ? (
+                                    <div className="text-center py-20 opacity-20">কোনো হিস্ট্রি নেই</div>
+                                ) : (
+                                    history.map(item => (
+                                        <div key={item.id} onClick={() => { setData(item); setView('calc'); }} className="card !p-4 flex justify-between items-center cursor-pointer active:scale-95 transition">
+                                            <div>
+                                                <h4 className="font-bold text-slate-900">{item.tourName || 'Unnamed'}</h4>
+                                                <p className="text-xs font-bold text-slate-400">{item.date} • {item.totalGuests} Pax</p>
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); setHistory(history.filter(h => h.id !== item.id)) }} className="p-2 text-rose-500">মুছুন</button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Bottom Bar */}
+                    <footer className="fixed bottom-0 left-0 right-0 p-4 max-w-md mx-auto z-[100]">
+                        <div className="bg-[#0f172a] text-white p-5 rounded-3xl shadow-2xl flex items-center justify-between border border-white/10">
+                            <div className="flex gap-6">
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase">রেগুলার</p>
+                                    <p className="text-2xl font-black">{results.totalReg}৳</p>
+                                </div>
+                                {data.discount1Guests > 0 && (
+                                    <div className="border-l border-white/10 pl-6">
+                                        <p className="text-[9px] font-black text-orange-500 uppercase">ডিসকাউন্ট</p>
+                                        <p className="text-2xl font-black text-orange-200">{results.totalD1}৳</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={saveTour} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 active:scale-90 transition">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                </button>
+                                <button onClick={copyText} className="bg-indigo-600 px-6 h-12 rounded-2xl font-black text-xs uppercase flex items-center gap-2 shadow-lg active:scale-95 transition">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {copied && (
+                        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black text-white px-8 py-3 rounded-full text-sm font-black shadow-2xl animate-bounce z-[200]">
+                            কপি হয়েছে!
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "name": "Ponkhiiraj Travel Calculator",
+  "description": "A specialized tour expense calculator for Ponkhiiraj Travel with complex bus fare distribution and offline storage capability.",
+  "requestFramePermissions": []
+}
