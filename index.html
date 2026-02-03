@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e1b4b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="পঙ্খিরাজ">
     <title>পঙ্খিরাজ ট্রাভেল ক্যালকুলেটর</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3125/3125713.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2344/2344132.png">
     
     <!-- Scripts for direct browser support -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -80,12 +83,14 @@
     <div id="root"></div>
 
     <script>
-        // Service Worker Registration for PWA
+        // Service Worker Registration logic adjusted for GitHub Pages sub-folders
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker Registered'))
-                    .catch(err => console.log('Service Worker Failed', err));
+                // Using relative path to ensure it works whether hosted at root or sub-path
+                const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
+                navigator.serviceWorker.register(swPath)
+                    .then(reg => console.log('Ponkhiiraj SW Registered', reg.scope))
+                    .catch(err => console.log('Ponkhiiraj SW Registration Failed', err));
             });
         }
     </script>
