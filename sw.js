@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ponkhiiraj-travel-v3';
+const CACHE_NAME = 'ponkhiiraj-travel-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const ASSETS = [
   'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap',
-  'https://cdn-icons-png.flaticon.com/512/1011/1011812.png'
+  'https://i.postimg.cc/d3L5pmMK/Abstract-Calculator-Logo-20260204-103121-0000.png'
 ];
 
 // Install event - caching the app shell
