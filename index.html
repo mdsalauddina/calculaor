@@ -11,7 +11,7 @@
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/d3L5pmMK/Abstract-Calculator-Logo-20260204-103121-0000.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
     
     <!-- Scripts for direct browser support -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -89,8 +89,8 @@
                 // Using relative path to ensure it works whether hosted at root or sub-path
                 const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
                 navigator.serviceWorker.register(swPath)
-                    .then(reg => console.log('Ponkhiiraj SW Registered', reg.scope))
-                    .catch(err => console.log('Ponkhiiraj SW Registration Failed', err));
+                    .then(reg => console.log('Pankhiraj SW Registered', reg.scope))
+                    .catch(err => console.log('Pankhiraj SW Registration Failed', err));
             });
         }
     </script>
@@ -285,7 +285,7 @@
                             <div className="bg-indigo-500 p-1.5 rounded-lg shadow-lg">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
-                            <h1 className="text-lg font-black tracking-tighter uppercase">PONKHIIRAJ</h1>
+                            <h1 className="text-lg font-black tracking-tighter uppercase">Pankhiraj</h1>
                         </div>
                         <div className="flex bg-[#2e2a5e] p-1 rounded-xl shadow-inner border border-white/5">
                             <button onClick={() => setView('calc')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'calc' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিসাব</button>
