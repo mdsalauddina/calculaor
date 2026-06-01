@@ -601,10 +601,18 @@
                                         <p className="text-lg font-black">{results.totalD2}৳</p>
                                     </div>
                                 )}
+                                {data.discount3Guests > 0 && (
+                                    <div className="shrink-0 border-l border-white/5 pl-4">
+                                        <p className="text-[10px] font-black text-amber-600 uppercase">ডি {data.discount3Amount}</p>
+                                        <p className="text-lg font-black">{results.totalD3}৳</p>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex gap-3 shrink-0">
                                 <button onClick={saveTour} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></button>
-                                <button onClick={copyMainSummary} className="bg-indigo-600 px-6 h-12 rounded-2xl font-black text-xs uppercase shadow-lg">COPY</button>
+                                <button onClick={view === 'payment' ? copyBillingSummary : copyMainSummary} className="bg-indigo-600 px-6 h-12 rounded-2xl font-black text-xs uppercase shadow-lg">
+                                    {view === 'payment' ? 'BILL COPY' : 'COPY'}
+                                </button>
                             </div>
                         </div>
                     </footer>
