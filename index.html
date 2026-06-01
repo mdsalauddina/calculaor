@@ -319,13 +319,132 @@
                             <h1 className="text-lg font-black tracking-tighter uppercase">Pankhiraj</h1>
                         </div>
                         <div className="flex bg-[#2e2a5e] p-1 rounded-xl shadow-inner border border-white/5">
-                            <button onClick={() => setView('calc')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'calc' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিসাব</button>
-                            <button onClick={() => setView('history')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${view === 'history' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিস্ট্রি</button>
+                            <button onClick={() => setView('calc')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'calc' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিসাব</button>
+                            <button onClick={() => setView('payment')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'payment' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>পেমেন্ট</button>
+                            <button onClick={() => setView('history')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'history' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিস্ট্রি</button>
                         </div>
                     </header>
 
                     <main className="p-4 space-y-4">
-                        {view === 'calc' ? (
+                        {view === 'history' ? (
+                            <div className="space-y-4">
+                                {history.length === 0 && <div className="p-8 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">খালি হিস্ট্রি</div>}
+                                {history.map(item => (
+                                    <div key={item.id} onClick={() => { setData(item); setView('calc'); }} className="card !p-5 flex justify-between items-center cursor-pointer active:scale-[0.98] hover:border-indigo-200 transition-all">
+                                        <div className="flex-1">
+                                            <h4 className="font-black text-slate-900 text-base">{item.tourName || 'Unnamed Tour'}</h4>
+                                            <p className="text-[10px] font-black text-indigo-500 mt-1 uppercase tracking-tighter">{item.date} • {item.totalGuests} গেস্ট</p>
+                                        </div>
+                                        <button onClick={(e) => { e.stopPropagation(); if(confirm('ডিলিট করতে চান?')) setHistory(history.filter(h => h.id !== item.id)) }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : view === 'payment' ? (
+                            <div className="card border-2 border-indigo-500/10 bg-indigo-50/10">
+                                <div className="flex justify-between items-center mb-5">
+                                    <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">পেমেন্ট সামারি (Advance)</span>
+                                    <button onClick={resetBilling} className="text-rose-600 text-[10px] font-black uppercase">Reset</button>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="label-text">প্রতিষ্ঠান/নাম</label>
+                                    <input type="text" placeholder="যেমন: পঙ্খিরাজ ট্রাভেল" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
+                                </div>
+
+                                {data.showHotel && (
+                                    <div className="mb-6">
+                                        <label className="label-text">রুম সিলেক্ট করুন (সিটের সাথে যোগ হবে)</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button onClick={() => setSelectedRoomType('none')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'none' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>None</button>
+                                            <button onClick={() => setSelectedRoomType('nonAcSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcSingle' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Single</button>
+                                            <button onClick={() => setSelectedRoomType('nonAcCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcCouple' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Couple</button>
+                                            <button onClick={() => setSelectedRoomType('acSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acSingle' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Single</button>
+                                            <button onClick={() => setSelectedRoomType('acCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acCouple' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Couple</button>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    <button onClick={() => {
+                                        const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                        const label = (data.showHotel && selectedRoomType !== 'none') ? `Regular Seat + ${roomLabels[selectedRoomType]}` : `Regular Seat`;
+                                        const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalReg + results.hotelPP[selectedRoomType] : results.totalReg;
+                                        addBillingItem(label, price);
+                                    }} className="text-[10px] bg-indigo-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Reg</button>
+                                    
+                                    <button onClick={() => {
+                                        const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                        const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount1Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount1Amount}৳ Seat`;
+                                        const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD1 + results.hotelPP[selectedRoomType] : results.totalD1;
+                                        addBillingItem(label, price);
+                                    }} className="text-[10px] bg-orange-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount1Amount}</button>
+
+                                    <button onClick={() => {
+                                        const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                        const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount2Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount2Amount}৳ Seat`;
+                                        const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD2 + results.hotelPP[selectedRoomType] : results.totalD2;
+                                        addBillingItem(label, price);
+                                    }} className="text-[10px] bg-amber-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount2Amount}</button>
+
+                                    <button onClick={() => {
+                                        const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                        const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount3Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount3Amount}৳ Seat`;
+                                        const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD3 + results.hotelPP[selectedRoomType] : results.totalD3;
+                                        addBillingItem(label, price);
+                                    }} className="text-[10px] bg-amber-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount3Amount}</button>
+
+                                    <button onClick={() => addBillingItem('অন্যান্য', 0)} className="text-[10px] bg-slate-800 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Custom</button>
+                                </div>
+
+                                <div className="space-y-3 mb-6">
+                                    {data.billingItems.map((item, idx) => (
+                                        <div key={item.id} className="p-4 bg-white rounded-2xl border border-indigo-100 flex flex-col gap-3">
+                                            <div className="flex justify-between">
+                                                <input type="text" value={item.label} onChange={e => { const items = [...data.billingItems]; items[idx].label = e.target.value; setData({...data, billingItems: items}) }} className="font-black text-sm outline-none border-b border-indigo-50 focus:border-indigo-500 w-full" />
+                                                <button onClick={() => setData({...data, billingItems: data.billingItems.filter(i => i.id !== item.id)})} className="text-rose-400 ml-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <input type="number" value={item.price || ''} onChange={e => { const items = [...data.billingItems]; items[idx].price = parseInt(e.target.value) || 0; setData({...data, billingItems: items}) }} className="custom-input !py-2 !text-sm" placeholder="৳ দাম" />
+                                                <input type="number" value={item.count || ''} onChange={e => { const items = [...data.billingItems]; items[idx].count = parseInt(e.target.value) || 0; setData({...data, billingItems: items}) }} className="custom-input !py-2 !text-sm" placeholder="জন" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md">
+                                    <div className="flex justify-between items-center mb-4 border-b border-indigo-50 pb-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase">মোট খরচ</span>
+                                            <span className="text-[10px] font-bold text-indigo-400 truncate max-w-[150px]">
+                                                {data.companyName || 'পেমেন্ট'} {data.tourName ? `- ${data.tourName}` : ''}
+                                            </span>
+                                        </div>
+                                        <span className="text-xl font-black text-indigo-900">৳{billingSummary.totalCost}</span>
+                                    </div>
+                                    <div className="mb-4">
+                                        <label className="label-text">জমা দেওয়া টাকা (Advance/Paid)</label>
+                                        <input type="number" value={data.billingDue || ''} onChange={e => setData({...data, billingDue: parseInt(e.target.value) || 0})} className="custom-input !bg-rose-50/30 !border-rose-100" placeholder="কত জমা আছে?" />
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-black text-slate-600 uppercase">পাবো (Pabo):</span>
+                                            <span className="text-2xl font-black text-indigo-600">৳{billingSummary.pabo}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-slate-400">bKash Charge:</span>
+                                            <span className="text-xs font-black text-slate-500">৳{billingSummary.bkashCharge}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onClick={copyBillingSummary} className="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 btn-shadow active:scale-[0.98] transition-all">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                    Copy Billing Details
+                                </button>
+                            </div>
+                        ) : (
                             <React.Fragment>
                                 <div className="card">
                                     <div className="flex justify-between items-center mb-4">
@@ -459,123 +578,7 @@
                                     </div>
                                 )}
 
-                                <div className="card border-2 border-indigo-500/10 bg-indigo-50/10">
-                                    <div className="flex justify-between items-center mb-5">
-                                        <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">পেমেন্ট সামারি (Advance)</span>
-                                        <button onClick={resetBilling} className="text-rose-600 text-[10px] font-black uppercase">Reset</button>
-                                    </div>
-
-                                    <div className="mb-6">
-                                        <label className="label-text">প্রতিষ্ঠান/নাম</label>
-                                        <input type="text" placeholder="যেমন: পঙ্খিরাজ ট্রাভেল" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
-                                    </div>
-
-                                    {data.showHotel && (
-                                        <div className="mb-6">
-                                            <label className="label-text">রুম সিলেক্ট করুন (সিটের সাথে যোগ হবে)</label>
-                                            <div className="flex flex-wrap gap-2">
-                                                <button onClick={() => setSelectedRoomType('none')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'none' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>None</button>
-                                                <button onClick={() => setSelectedRoomType('nonAcSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcSingle' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Single</button>
-                                                <button onClick={() => setSelectedRoomType('nonAcCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcCouple' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Couple</button>
-                                                <button onClick={() => setSelectedRoomType('acSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acSingle' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Single</button>
-                                                <button onClick={() => setSelectedRoomType('acCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acCouple' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Couple</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                        <button onClick={() => {
-                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
-                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `Regular Seat + ${roomLabels[selectedRoomType]}` : `Regular Seat`;
-                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalReg + results.hotelPP[selectedRoomType] : results.totalReg;
-                                            addBillingItem(label, price);
-                                        }} className="text-[10px] bg-indigo-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Reg</button>
-                                        
-                                        <button onClick={() => {
-                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
-                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount1Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount1Amount}৳ Seat`;
-                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD1 + results.hotelPP[selectedRoomType] : results.totalD1;
-                                            addBillingItem(label, price);
-                                        }} className="text-[10px] bg-orange-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount1Amount}</button>
-
-                                        <button onClick={() => {
-                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
-                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount2Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount2Amount}৳ Seat`;
-                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD2 + results.hotelPP[selectedRoomType] : results.totalD2;
-                                            addBillingItem(label, price);
-                                        }} className="text-[10px] bg-amber-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount2Amount}</button>
-
-                                        <button onClick={() => {
-                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
-                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount3Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount3Amount}৳ Seat`;
-                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD3 + results.hotelPP[selectedRoomType] : results.totalD3;
-                                            addBillingItem(label, price);
-                                        }} className="text-[10px] bg-amber-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount3Amount}</button>
-
-                                        <button onClick={() => addBillingItem('অন্যান্য', 0)} className="text-[10px] bg-slate-800 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Custom</button>
-                                    </div>
-
-                                    <div className="space-y-3 mb-6">
-                                        {data.billingItems.map((item, idx) => (
-                                            <div key={item.id} className="p-4 bg-white rounded-2xl border border-indigo-100 flex flex-col gap-3">
-                                                <div className="flex justify-between">
-                                                    <input type="text" value={item.label} onChange={e => { const items = [...data.billingItems]; items[idx].label = e.target.value; setData({...data, billingItems: items}) }} className="font-black text-sm outline-none border-b border-indigo-50 focus:border-indigo-500 w-full" />
-                                                    <button onClick={() => setData({...data, billingItems: data.billingItems.filter(i => i.id !== item.id)})} className="text-rose-400 ml-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <input type="number" value={item.price || ''} onChange={e => { const items = [...data.billingItems]; items[idx].price = parseInt(e.target.value) || 0; setData({...data, billingItems: items}) }} className="custom-input !py-2 !text-sm" placeholder="৳ দাম" />
-                                                    <input type="number" value={item.count || ''} onChange={e => { const items = [...data.billingItems]; items[idx].count = parseInt(e.target.value) || 0; setData({...data, billingItems: items}) }} className="custom-input !py-2 !text-sm" placeholder="জন" />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md">
-                                        <div className="flex justify-between items-center mb-4 border-b border-indigo-50 pb-3">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase">মোট খরচ</span>
-                                                <span className="text-[10px] font-bold text-indigo-400 truncate max-w-[150px]">
-                                                    {data.companyName || 'পেমেন্ট'} {data.tourName ? `- ${data.tourName}` : ''}
-                                                </span>
-                                            </div>
-                                            <span className="text-xl font-black text-indigo-900">৳{billingSummary.totalCost}</span>
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="label-text">জমা দেওয়া টাকা (Advance/Paid)</label>
-                                            <input type="number" value={data.billingDue || ''} onChange={e => setData({...data, billingDue: parseInt(e.target.value) || 0})} className="custom-input !bg-rose-50/30 !border-rose-100" placeholder="কত জমা আছে?" />
-                                        </div>
-                                        <div className="mt-4 space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm font-black text-slate-600 uppercase">পাবো (Pabo):</span>
-                                                <span className="text-2xl font-black text-indigo-600">৳{billingSummary.pabo}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-bold text-slate-400">bKash Charge:</span>
-                                                <span className="text-xs font-black text-slate-500">৳{billingSummary.bkashCharge}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button onClick={copyBillingSummary} className="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 btn-shadow active:scale-[0.98] transition-all">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                                        Copy Billing Details
-                                    </button>
-                                </div>
-                            </React.Fragment>
-                        ) : (
-                            <div className="space-y-4">
-                                {history.map(item => (
-                                    <div key={item.id} onClick={() => { setData(item); setView('calc'); }} className="card !p-5 flex justify-between items-center cursor-pointer active:scale-[0.98] hover:border-indigo-200 transition-all">
-                                        <div className="flex-1">
-                                            <h4 className="font-black text-slate-900 text-base">{item.tourName || 'Unnamed Tour'}</h4>
-                                            <p className="text-[10px] font-black text-indigo-500 mt-1 uppercase tracking-tighter">{item.date} • {item.totalGuests} গেস্ট</p>
-                                        </div>
-                                        <button onClick={(e) => { e.stopPropagation(); if(confirm('ডিলিট করতে চান?')) setHistory(history.filter(h => h.id !== item.id)) }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                                </React.Fragment>
                         )}
                     </main>
 
