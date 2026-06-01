@@ -78,6 +78,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
@@ -120,7 +121,14 @@
             billingItems: [
                 { id: 'b1', label: 'Regular Seat', price: 0, count: 0 }
             ],
-            billingDue: 0
+            billingDue: 0,
+            showHotel: false,
+            hotel: {
+                nonAcSingle: { amount: 0, count: 0 },
+                nonAcCouple: { amount: 0, count: 0 },
+                acSingle: { amount: 0, count: 0 },
+                acCouple: { amount: 0, count: 0 }
+            }
         };
 
         const App = () => {
@@ -128,6 +136,7 @@
             const [history, setHistory] = useState([]);
             const [view, setView] = useState('calc');
             const [copied, setCopied] = useState(false);
+            const [selectedRoomType, setSelectedRoomType] = useState('none');
 
             useEffect(() => {
                 const saved = localStorage.getItem('pkj_calc_github_v13');
@@ -140,7 +149,14 @@
                 const netBus = grossBus - totalDemurrage;
                 const guests = Number(data.totalGuests) || 0;
                 
-                if (guests === 0) return { netBus, basicFare: 0, regBus: 0, d1Bus: 0, d2Bus: 0, d3Bus: 0, otherPP: 0, totalReg: 0, totalD1: 0, totalD2: 0, totalD3: 0 };
+                const hotelPP = {
+                    nonAcSingle: (data.hotel?.nonAcSingle?.count > 0) ? Math.ceil((Number(data.hotel.nonAcSingle.amount) || 0) / Number(data.hotel.nonAcSingle.count)) : 0,
+                    nonAcCouple: (data.hotel?.nonAcCouple?.count > 0) ? Math.ceil((Number(data.hotel.nonAcCouple.amount) || 0) / Number(data.hotel.nonAcCouple.count)) : 0,
+                    acSingle: (data.hotel?.acSingle?.count > 0) ? Math.ceil((Number(data.hotel.acSingle.amount) || 0) / Number(data.hotel.acSingle.count)) : 0,
+                    acCouple: (data.hotel?.acCouple?.count > 0) ? Math.ceil((Number(data.hotel.acCouple.amount) || 0) / Number(data.hotel.acCouple.count)) : 0,
+                };
+
+                if (guests === 0) return { netBus, basicFare: 0, regBus: 0, d1Bus: 0, d2Bus: 0, d3Bus: 0, otherPP: 0, hotelPP, totalReg: 0, totalD1: 0, totalD2: 0, totalD3: 0 };
 
                 // LOGIC: Double Rounding (as requested by user)
                 const basicFare = Math.ceil(netBus / guests);
@@ -163,13 +179,13 @@
                 }, 0);
 
                 return { 
-                    netBus, basicFare, regBus, d1Bus, d2Bus, d3Bus, otherPP, 
+                    netBus, basicFare, regBus, d1Bus, d2Bus, d3Bus, otherPP, hotelPP,
                     totalReg: regBus + otherPP, 
                     totalD1: d1Bus + otherPP,
                     totalD2: d2Bus + otherPP,
                     totalD3: d3Bus + otherPP
                 };
-            }, [data.busCost, data.tollTipCost, data.demurrageAmount, data.demurrageCount, data.totalGuests, data.discount1Guests, data.discount1Amount, data.discount2Guests, data.discount2Amount, data.discount3Guests, data.discount3Amount, data.otherExpenses]);
+            }, [data.busCost, data.tollTipCost, data.demurrageAmount, data.demurrageCount, data.totalGuests, data.discount1Guests, data.discount1Amount, data.discount2Guests, data.discount2Amount, data.discount3Guests, data.discount3Amount, data.otherExpenses, data.hotel]);
 
             useEffect(() => {
                 setData(prev => ({
@@ -211,6 +227,20 @@
                     return `${ex.name} ${ex.totalAmount}÷${ex.guestCount}= ${pp}`;
                 }).join('\n');
 
+                const hotelDetails = data.showHotel ? [
+                    { key: 'nonAcSingle', label: 'Non AC Single' },
+                    { key: 'nonAcCouple', label: 'Non AC Couple' },
+                    { key: 'acSingle', label: 'AC Single' },
+                    { key: 'acCouple', label: 'AC Couple' }
+                ].map(room => {
+                    const h = data.hotel[room.key];
+                    if (h.count > 0) {
+                        const finalPP = results.hotelPP[room.key];
+                        return `${room.label}: ${h.amount}÷${h.count}= ${finalPP}`;
+                    }
+                    return null;
+                }).filter(Boolean).join('\n') : '';
+
                 const totalDemurrage = (data.demurrageAmount || 0) * (data.demurrageCount || 0);
 
                 const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\n` +
@@ -223,7 +253,8 @@
                     `${data.discount1Guests > 0 ? `ডিসকাউন্ট ${data.discount1Amount}৳ সিট: ${results.d1Bus}\n` : ''}` +
                     `${data.discount2Guests > 0 ? `ডিসকাউন্ট ${data.discount2Amount}৳ সিট: ${results.d2Bus}\n` : ''}` +
                     `${data.discount3Guests > 0 ? `ডিসকাউন্ট ${data.discount3Amount}৳ সিট: ${results.d3Bus}\n` : ''}\n` +
-                    `${otherDetails}\n\n` +
+                    `${otherDetails}\n` +
+                    `${hotelDetails ? `\nহোটেল (জনপ্রতি):\n${hotelDetails}\n` : ''}\n` +
                     `মুল সিট জনপ্রতি: ${results.totalReg}\n` +
                     `${data.discount1Guests > 0 ? `ডিসকাউন্ট ${data.discount1Amount}৳ জনপ্রতি: ${results.totalD1}\n` : ''}` +
                     `${data.discount2Guests > 0 ? `ডিসকাউন্ট ${data.discount2Amount}৳ জনপ্রতি: ${results.totalD2}\n` : ''}` +
@@ -374,6 +405,60 @@
                                     </div>
                                 </div>
 
+                                <div className="card flex justify-between items-center bg-indigo-50/50 border-indigo-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-10V4a1 1 0 011-1h2a1 1 0 011 1v3M12 21V10"/></svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-indigo-900 uppercase leading-none">হোটেল ভাড়া</h3>
+                                            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-tighter mt-1">রুম ক্যাটাগরি অনুযায়ী খরচ</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setData({...data, showHotel: !data.showHotel})} className={`w-10 h-5 rounded-full transition-colors relative ${data.showHotel ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${data.showHotel ? 'left-5.5' : 'left-0.5'}`}></div>
+                                    </button>
+                                </div>
+
+                                {data.showHotel && (
+                                    <div className="card border-indigo-200">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">রুম ক্যাটাগরি</span>
+                                            <button onClick={() => setData({...data, showHotel: false})} className="text-rose-500 text-[10px] font-black uppercase">বন্ধ করুন</button>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {[
+                                                { id: 'nonAcSingle', label: 'Non AC Single' },
+                                                { id: 'nonAcCouple', label: 'Non AC Couple' },
+                                                { id: 'acSingle', label: 'AC Single' },
+                                                { id: 'acCouple', label: 'AC Couple' }
+                                            ].map(room => (
+                                                <div key={room.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                                    <span className="text-[10px] font-black text-indigo-600 uppercase mb-2 block">{room.label}</span>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">টোটাল (৳)</label>
+                                                            <input type="number" placeholder="৳" value={data.hotel[room.id].amount || ''} onChange={e => {
+                                                                const h = {...data.hotel};
+                                                                h[room.id].amount = parseInt(e.target.value) || 0;
+                                                                setData({...data, hotel: h});
+                                                            }} className="custom-input !py-1.5 !text-xs !font-bold" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">জন</label>
+                                                            <input type="number" placeholder="জন" value={data.hotel[room.id].count || ''} onChange={e => {
+                                                                const h = {...data.hotel};
+                                                                h[room.id].count = parseInt(e.target.value) || 0;
+                                                                setData({...data, hotel: h});
+                                                            }} className="custom-input !py-1.5 !text-xs !font-bold" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="card border-2 border-indigo-500/10 bg-indigo-50/10">
                                     <div className="flex justify-between items-center mb-5">
                                         <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">পেমেন্ট সামারি (Advance)</span>
@@ -384,11 +469,49 @@
                                         <label className="label-text">প্রতিষ্ঠান/নাম</label>
                                         <input type="text" placeholder="যেমন: পঙ্খিরাজ ট্রাভেল" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
                                     </div>
+
+                                    {data.showHotel && (
+                                        <div className="mb-6">
+                                            <label className="label-text">রুম সিলেক্ট করুন (সিটের সাথে যোগ হবে)</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button onClick={() => setSelectedRoomType('none')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'none' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>None</button>
+                                                <button onClick={() => setSelectedRoomType('nonAcSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcSingle' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Single</button>
+                                                <button onClick={() => setSelectedRoomType('nonAcCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'nonAcCouple' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>NA Couple</button>
+                                                <button onClick={() => setSelectedRoomType('acSingle')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acSingle' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Single</button>
+                                                <button onClick={() => setSelectedRoomType('acCouple')} className={`text-[9px] px-3 py-1.5 rounded-xl font-black uppercase transition-all ${selectedRoomType === 'acCouple' ? 'bg-cyan-600 text-white shadow-lg' : 'bg-slate-100 text-slate-500'}`}>AC Couple</button>
+                                            </div>
+                                        </div>
+                                    )}
                                     
                                     <div className="flex flex-wrap gap-2 mb-6">
-                                        <button onClick={() => addBillingItem(`Regular Seat`, results.totalReg)} className="text-[10px] bg-indigo-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Reg</button>
-                                        <button onClick={() => addBillingItem(`Discount ${data.discount1Amount}৳ Seat`, results.totalD1)} className="text-[10px] bg-orange-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount1Amount}</button>
-                                        <button onClick={() => addBillingItem(`Discount ${data.discount2Amount}৳ Seat`, results.totalD2)} className="text-[10px] bg-amber-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount2Amount}</button>
+                                        <button onClick={() => {
+                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `Regular Seat + ${roomLabels[selectedRoomType]}` : `Regular Seat`;
+                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalReg + results.hotelPP[selectedRoomType] : results.totalReg;
+                                            addBillingItem(label, price);
+                                        }} className="text-[10px] bg-indigo-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Reg</button>
+                                        
+                                        <button onClick={() => {
+                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount1Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount1Amount}৳ Seat`;
+                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD1 + results.hotelPP[selectedRoomType] : results.totalD1;
+                                            addBillingItem(label, price);
+                                        }} className="text-[10px] bg-orange-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount1Amount}</button>
+
+                                        <button onClick={() => {
+                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount2Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount2Amount}৳ Seat`;
+                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD2 + results.hotelPP[selectedRoomType] : results.totalD2;
+                                            addBillingItem(label, price);
+                                        }} className="text-[10px] bg-amber-500 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount2Amount}</button>
+
+                                        <button onClick={() => {
+                                            const roomLabels = { nonAcSingle: 'NA Single', nonAcCouple: 'NA Couple', acSingle: 'AC Single', acCouple: 'AC Couple' };
+                                            const label = (data.showHotel && selectedRoomType !== 'none') ? `D${data.discount3Amount} Seat + ${roomLabels[selectedRoomType]}` : `Discount ${data.discount3Amount}৳ Seat`;
+                                            const price = (data.showHotel && selectedRoomType !== 'none') ? results.totalD3 + results.hotelPP[selectedRoomType] : results.totalD3;
+                                            addBillingItem(label, price);
+                                        }} className="text-[10px] bg-amber-600 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ D {data.discount3Amount}</button>
+
                                         <button onClick={() => addBillingItem('অন্যান্য', 0)} className="text-[10px] bg-slate-800 text-white px-3 py-1.5 rounded-full font-black uppercase btn-shadow">+ Custom</button>
                                     </div>
 
@@ -491,5 +614,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
