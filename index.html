@@ -241,6 +241,20 @@
                     return null;
                 }).filter(Boolean).join('\n') : '';
 
+                const combinedRoomRates = data.showHotel ? [
+                    { key: 'nonAcSingle', label: 'Non AC Single' },
+                    { key: 'nonAcCouple', label: 'Non AC Couple' },
+                    { key: 'acSingle', label: 'AC Single' },
+                    { key: 'acCouple', label: 'AC Couple' }
+                ].map(room => {
+                    const h = data.hotel[room.key];
+                    if (h.count > 0) {
+                        const totalWithRoom = results.totalReg + results.hotelPP[room.key];
+                        return `${room.label} মুল সিট জনপ্রতি: ${totalWithRoom}`;
+                    }
+                    return null;
+                }).filter(Boolean).join('\n') : '';
+
                 const totalDemurrage = (data.demurrageAmount || 0) * (data.demurrageCount || 0);
 
                 const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\n` +
@@ -258,7 +272,8 @@
                     `মুল সিট জনপ্রতি: ${results.totalReg}\n` +
                     `${data.discount1Guests > 0 ? `ডিসকাউন্ট ${data.discount1Amount}৳ জনপ্রতি: ${results.totalD1}\n` : ''}` +
                     `${data.discount2Guests > 0 ? `ডিসকাউন্ট ${data.discount2Amount}৳ জনপ্রতি: ${results.totalD2}\n` : ''}` +
-                    `${data.discount3Guests > 0 ? `ডিসকাউন্ট ${data.discount3Amount}৳ জনপ্রতি: ${results.totalD3}` : ''}`;
+                    `${data.discount3Guests > 0 ? `ডিসকাউন্ট ${data.discount3Amount}৳ জনপ্রতি: ${results.totalD3}\n` : ''}` +
+                    `${combinedRoomRates ? `\n\n${combinedRoomRates}` : ''}`;
 
                 copyToClipboard(summary);
             };
