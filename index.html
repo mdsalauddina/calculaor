@@ -10,7 +10,7 @@
     <title>PTT Calc</title>
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=2">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
     
     <!-- Scripts for direct browser support -->
@@ -39,10 +39,10 @@
             color: #0f172a !important;
             border: 1px solid #e2e8f0 !important;
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 10px;
+            padding: 7px 10px;
+            border-radius: 8px;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 12px;
             outline: none;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -53,20 +53,20 @@
         }
         .label-text {
             color: #64748b;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 900;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             display: block;
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
         .card {
             background: white;
-            border-radius: 16px;
-            padding: 14px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
-            border: 1px solid rgba(226, 232, 240, 0.6);
-            margin-bottom: 10px;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            margin-bottom: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .card:hover {
@@ -116,8 +116,8 @@
                 // Using relative path to ensure it works whether hosted at root or sub-path
                 const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
                 navigator.serviceWorker.register(swPath)
-                    .then(reg => console.log('Pankhiraj SW Registered', reg.scope))
-                    .catch(err => console.log('Pankhiraj SW Registration Failed', err));
+                    .then(reg => console.log('PTT Calc SW Registered', reg.scope))
+                    .catch(err => console.log('PTT Calc SW Registration Failed', err));
             });
         }
     </script>
@@ -288,7 +288,7 @@
 
                 const totalDemurrage = (data.demurrageAmount || 0) * (data.demurrageCount || 0);
 
-                const summary = `${data.tourName || 'পঙ্খিরাজ ট্রাভেল'}\nতারিখ: ${data.date}\n\n` +
+                const summary = `${data.tourName || 'PTT Calc'}\nতারিখ: ${data.date}\n\n` +
                     `বাস ও আনুষঙ্গিক: ${(Number(data.busCost) || 0) + (Number(data.tollTipCost) || 0)}\n` +
                     `${totalDemurrage > 0 ? `ডেমারেজ বিয়োগ: -${totalDemurrage} (${data.demurrageAmount}x${data.demurrageCount})\n` : ''}` +
                     `হিসাবযোগ্য বাস ভাড়া: ${results.netBus}\n` +
@@ -396,7 +396,7 @@
 
                                 <div className="mb-6">
                                     <label className="label-text">প্রতিষ্ঠান/নাম</label>
-                                    <input type="text" placeholder="যেমন: পঙ্খিরাজ ট্রাভেল" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
+                                    <input type="text" placeholder="যেমন: পকেট ট্যুর" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
                                 </div>
 
                                 {data.showHotel && (
