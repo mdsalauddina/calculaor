@@ -24,8 +24,9 @@
     <style>
         body { 
             font-family: 'Hind Siliguri', sans-serif; 
-            background-color: #f8fafc; 
-            color: #0f172a;
+            background-color: #f1f5f9; 
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
         }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
             -webkit-appearance: none; 
@@ -34,38 +35,42 @@
         input[type=number] { -moz-appearance: textfield; }
         
         .custom-input {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            border: 2px solid #e2e8f0 !important;
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 12px;
             border-radius: 10px;
             font-weight: 700;
-            font-size: 16px;
+            font-size: 13px;
             outline: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .custom-input:focus {
             border-color: #6366f1 !important;
             background-color: #ffffff !important;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
         .label-text {
             color: #64748b;
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 9px;
+            font-weight: 900;
             margin-bottom: 6px;
             display: block;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
         }
         .card {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.06);
-            border: 1px solid #f1f5f9;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            margin-bottom: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
         }
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -75,7 +80,28 @@
             scrollbar-width: none;
         }
         .btn-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+        }
+        .nav-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-pill.active {
+            background: white;
+            color: #1e1b4b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: scale(1.05);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out forwards;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
     </style>
 <link rel="stylesheet" href="/index.css">
@@ -246,14 +272,19 @@
                     { key: 'nonAcCouple', label: 'Non AC Couple' },
                     { key: 'acSingle', label: 'AC Single' },
                     { key: 'acCouple', label: 'AC Couple' }
-                ].map(room => {
+                ].flatMap(room => {
                     const h = data.hotel[room.key];
-                    if (h.count > 0) {
-                        const totalWithRoom = results.totalReg + results.hotelPP[room.key];
-                        return `${room.label} মুল সিট জনপ্রতি: ${totalWithRoom}`;
+                    if (h && h.count > 0) {
+                        const roomCost = results.hotelPP[room.key];
+                        const lines = [];
+                        lines.push(`${room.label} মুল সিট জনপ্রতি: ${results.totalReg + roomCost}`);
+                        if (data.discount1Guests > 0) lines.push(`${room.label} ডিসকাউন্ট ${data.discount1Amount}৳ জনপ্রতি: ${results.totalD1 + roomCost}`);
+                        if (data.discount2Guests > 0) lines.push(`${room.label} ডিসকাউন্ট ${data.discount2Amount}৳ জনপ্রতি: ${results.totalD2 + roomCost}`);
+                        if (data.discount3Guests > 0) lines.push(`${room.label} ডিসকাউন্ট ${data.discount3Amount}৳ জনপ্রতি: ${results.totalD3 + roomCost}`);
+                        return lines;
                     }
-                    return null;
-                }).filter(Boolean).join('\n') : '';
+                    return [];
+                }).join('\n') : '';
 
                 const totalDemurrage = (data.demurrageAmount || 0) * (data.demurrageCount || 0);
 
@@ -326,17 +357,17 @@
 
             return (
                 <div className="min-h-screen max-w-md mx-auto bg-slate-50 flex flex-col relative pb-32">
-                    <header className="bg-[#1e1b4b] text-white p-5 flex justify-between items-center shadow-xl sticky top-0 z-50">
+                    <header className="bg-gradient-to-br from-[#1e1b4b] to-[#312e81] text-white p-4 flex justify-between items-center shadow-2xl sticky top-0 z-50 rounded-b-[24px]">
                         <div className="flex items-center gap-2">
-                            <div className="bg-indigo-500 p-1.5 rounded-lg shadow-lg">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-1.5 rounded-lg shadow-lg ring-1 ring-white/20">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
-                            <h1 className="text-lg font-black tracking-tighter uppercase">Pankhiraj</h1>
+                            <h1 className="text-base font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">PTT Calc</h1>
                         </div>
-                        <div className="flex bg-[#2e2a5e] p-1 rounded-xl shadow-inner border border-white/5">
-                            <button onClick={() => setView('calc')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'calc' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিসাব</button>
-                            <button onClick={() => setView('payment')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'payment' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>পেমেন্ট</button>
-                            <button onClick={() => setView('history')} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition ${view === 'history' ? 'bg-white text-indigo-900 shadow-md' : 'text-indigo-300'}`}>হিস্ট্রি</button>
+                        <div className="flex bg-indigo-950/40 p-0.5 rounded-xl border border-white/10 backdrop-blur-md">
+                            <button onClick={() => setView('calc')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'calc' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>হিসাব</button>
+                            <button onClick={() => setView('payment')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'payment' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>পেমেন্ট</button>
+                            <button onClick={() => setView('history')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'history' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>হিস্ট্রি</button>
                         </div>
                     </header>
 
@@ -461,172 +492,214 @@
                             </div>
                         ) : (
                             <React.Fragment>
-                                <div className="card">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">ট্যুর ইনফো</span>
-                                        <button onClick={() => confirm('সব মুছতে চান?') && setData({...INITIAL_DATA})} className="text-rose-600 text-xs font-black hover:text-rose-700">Reset</button>
+                                <div className="card animate-slide-up">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-6 bg-indigo-600 rounded-full"></div>
+                                            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">ট্যুর ইনফো</span>
+                                        </div>
+                                        <button onClick={() => confirm('সব মুছতে চান?') && setData({...INITIAL_DATA})} className="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">Reset</button>
                                     </div>
                                     <div className="space-y-4">
                                         <div>
                                             <label className="label-text">ট্যুরের নাম</label>
-                                            <input type="text" placeholder="যেমন: বান্দরবান ডে" value={data.tourName} onChange={e => setData({...data, tourName: e.target.value})} className="custom-input" />
+                                            <input type="text" placeholder="যেমন: বান্দরবান ডে" value={data.tourName} onChange={e => setData({...data, tourName: e.target.value})} className="custom-input shadow-sm" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="label-text">মোট উপস্থিত গেস্ট</label>
-                                                <input type="number" value={data.totalGuests || ''} onChange={e => setData({...data, totalGuests: parseInt(e.target.value) || 0})} className="custom-input" />
+                                                <label className="label-text">মোট গেস্ট</label>
+                                                <input type="number" value={data.totalGuests || ''} onChange={e => setData({...data, totalGuests: parseInt(e.target.value) || 0})} className="custom-input shadow-sm text-center" />
                                             </div>
                                             <div>
                                                 <label className="label-text">তারিখ</label>
-                                                <input type="date" value={data.date} onChange={e => setData({...data, date: e.target.value})} className="custom-input" />
+                                                <input type="date" value={data.date} onChange={e => setData({...data, date: e.target.value})} className="custom-input shadow-sm" />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="card bg-white border-indigo-100 border shadow-sm">
-                                    <span className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-4 block">বাস ও ট্রান্সপোর্ট</span>
+                                <div className="card bg-white border-indigo-100 border shadow-sm animate-slide-up">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+                                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">বাস ও ট্রান্সপোর্ট</span>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div>
                                             <label className="label-text">বাস ভাড়া</label>
-                                            <input type="number" value={data.busCost || ''} onChange={e => setData({...data, busCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-100" />
+                                            <input type="number" value={data.busCost || ''} onChange={e => setData({...data, busCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-50 !bg-indigo-50/10" />
                                         </div>
                                         <div>
                                             <label className="label-text">টোল/বকশিস</label>
-                                            <input type="number" value={data.tollTipCost || ''} onChange={e => setData({...data, tollTipCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-100" />
+                                            <input type="number" value={data.tollTipCost || ''} onChange={e => setData({...data, tollTipCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-50 !bg-indigo-50/10" />
                                         </div>
                                     </div>
 
-                                    <div className="bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200 mb-4">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase mb-2 block">ডেমারেজ (বিয়োগ হবে)</span>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <input type="number" placeholder="সংখ্যা" value={data.demurrageCount || ''} onChange={e => setData({...data, demurrageCount: parseInt(e.target.value) || 0})} className="custom-input !py-2 !text-sm" />
-                                            <input type="number" placeholder="টাকা" value={data.demurrageAmount || ''} onChange={e => setData({...data, demurrageAmount: parseInt(e.target.value) || 0})} className="custom-input !py-2 !text-sm" />
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-4 group">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2 block text-center">ডেমারেজ (বিয়োগ)</span>
+                                        <div className="flex gap-2">
+                                            <input type="number" placeholder="সংখ্যা" value={data.demurrageCount || ''} onChange={e => setData({...data, demurrageCount: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-sm text-center" />
+                                            <div className="flex items-center text-slate-300 font-black">×</div>
+                                            <input type="number" placeholder="টাকা" value={data.demurrageAmount || ''} onChange={e => setData({...data, demurrageAmount: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-sm text-center" />
                                         </div>
                                     </div>
 
                                     <div className="space-y-3">
                                         {[1, 2, 3].map(n => (
-                                            <div key={n} className={`bg-slate-50/50 p-4 rounded-2xl border border-slate-100`}>
-                                                <span className="text-[10px] font-black text-slate-600 uppercase mb-2 block">ডিসকাউন্ট {data[`discount${n}Amount`] || 0}৳ স্লট</span>
+                                            <div key={n} className="bg-orange-50/40 p-3 rounded-2xl border border-orange-100/50">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-[9px] font-black text-orange-600 uppercase">ডিসকাউন্ট স্লট {n}</span>
+                                                </div>
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    <input type="number" placeholder="গেস্ট সংখ্যা" value={data[`discount${n}Guests`] || ''} onChange={e => setData({...data, [`discount${n}Guests`]: parseInt(e.target.value) || 0})} className="custom-input !py-2 !text-sm" />
-                                                    <input type="number" placeholder="ছাড় (৳)" value={data[`discount${n}Amount`] || ''} onChange={e => setData({...data, [`discount${n}Amount`]: parseInt(e.target.value) || 0})} className="custom-input !py-2 !text-sm" />
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">গেস্ট</label>
+                                                        <input type="number" placeholder="০" value={data[`discount${n}Guests`] || ''} onChange={e => setData({...data, [`discount${n}Guests`]: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-xs text-center !bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">ছাড়</label>
+                                                        <input type="number" placeholder="৳" value={data[`discount${n}Amount`] || ''} onChange={e => setData({...data, [`discount${n}Amount`]: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-xs text-center !bg-white" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="card">
+                                <div className="card animate-slide-up">
                                     <div className="flex justify-between items-center mb-4">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">অন্যান্য খরচ</span>
-                                        <button onClick={() => setData({...data, otherExpenses: [...data.otherExpenses, { id: Date.now().toString(), name: '', totalAmount: 0, guestCount: data.totalGuests }]})} className="bg-slate-900 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase">যোগ করুন</button>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-4 bg-cyan-500 rounded-full"></div>
+                                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">অন্যান্য খরচ</span>
+                                        </div>
+                                        <button onClick={() => setData({...data, otherExpenses: [...data.otherExpenses, { id: Date.now().toString(), name: '', totalAmount: 0, guestCount: data.totalGuests }]})} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">+ Add</button>
                                     </div>
                                     <div className="space-y-3">
                                         {data.otherExpenses.map((ex, idx) => (
-                                            <div key={ex.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="flex justify-between mb-2">
-                                                    <input type="text" placeholder="খরচের নাম" value={ex.name} onChange={e => { const items = [...data.otherExpenses]; items[idx].name = e.target.value; setData({...data, otherExpenses: items}) }} className="font-black text-sm outline-none bg-transparent w-1/2" />
-                                                    <button onClick={() => setData({...data, otherExpenses: data.otherExpenses.filter(i => i.id !== ex.id)})} className="text-rose-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                                            <div key={ex.id} className="p-3 bg-slate-50 rounded-[18px] border border-slate-100 relative group">
+                                                <button onClick={() => setData({...data, otherExpenses: data.otherExpenses.filter(i => i.id !== ex.id)})} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white text-rose-500 rounded-full shadow-sm flex items-center justify-center border border-rose-50">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                </button>
+                                                <div className="mb-3">
+                                                    <input type="text" placeholder="খরচের নাম" value={ex.name} onChange={e => { const items = [...data.otherExpenses]; items[idx].name = e.target.value; setData({...data, otherExpenses: items}) }} className="font-black text-sm outline-none bg-transparent w-full border-b border-slate-200 focus:border-indigo-500 transition-colors pb-1" />
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    <input type="number" placeholder="টাকা" value={ex.totalAmount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].totalAmount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-2 !text-sm" />
-                                                    <input type="number" placeholder="গেস্ট" value={ex.guestCount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].guestCount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-2 !text-sm" />
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase">৳ টাকা</label>
+                                                        <input type="number" placeholder="৳" value={ex.totalAmount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].totalAmount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs !bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase">জন</label>
+                                                        <input type="number" placeholder="জন" value={ex.guestCount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].guestCount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs !bg-white" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="card flex justify-between items-center bg-indigo-50/50 border-indigo-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-10V4a1 1 0 011-1h2a1 1 0 011 1v3M12 21V10"/></svg>
+                                <div className={`card animate-slide-up border-2 transition-all duration-300 ${data.showHotel ? 'border-indigo-500 bg-indigo-50/20 shadow-indigo-100 shadow-xl' : 'border-slate-100'}`}>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center shadow-lg transition-all ${data.showHotel ? 'bg-indigo-600 text-white rotate-6' : 'bg-slate-100 text-slate-400'}`}>
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-10V4a1 1 0 011-1h2a1 1 0 011 1v3M12 21V10"/></svg>
+                                            </div>
+                                            <div>
+                                                <h3 className={`font-black uppercase tracking-tight text-sm ${data.showHotel ? 'text-indigo-900' : 'text-slate-500'}`}>হোটেল সিস্টেম</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">রুম ক্যাটাগরি অনুযায়ী খরচ</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-sm font-black text-indigo-900 uppercase leading-none">হোটেল ভাড়া</h3>
-                                            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-tighter mt-1">রুম ক্যাটাগরি অনুযায়ী খরচ</p>
+                                        <div onClick={() => setData({...data, showHotel: !data.showHotel})} className={`w-14 h-8 rounded-full cursor-pointer p-1 transition-all flex items-center shadow-inner ${data.showHotel ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+                                            <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all transform ${data.showHotel ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                         </div>
                                     </div>
-                                    <button onClick={() => setData({...data, showHotel: !data.showHotel})} className={`w-10 h-5 rounded-full transition-colors relative ${data.showHotel ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-                                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${data.showHotel ? 'left-5.5' : 'left-0.5'}`}></div>
-                                    </button>
-                                </div>
 
-                                {data.showHotel && (
-                                    <div className="card border-indigo-200">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">রুম ক্যাটাগরি</span>
-                                            <button onClick={() => setData({...data, showHotel: false})} className="text-rose-500 text-[10px] font-black uppercase">বন্ধ করুন</button>
-                                        </div>
-                                        <div className="space-y-4">
-                                            {[
-                                                { id: 'nonAcSingle', label: 'Non AC Single' },
-                                                { id: 'nonAcCouple', label: 'Non AC Couple' },
-                                                { id: 'acSingle', label: 'AC Single' },
-                                                { id: 'acCouple', label: 'AC Couple' }
-                                            ].map(room => (
-                                                <div key={room.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                                    <span className="text-[10px] font-black text-indigo-600 uppercase mb-2 block">{room.label}</span>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">টোটাল (৳)</label>
-                                                            <input type="number" placeholder="৳" value={data.hotel[room.id].amount || ''} onChange={e => {
-                                                                const h = {...data.hotel};
-                                                                h[room.id].amount = parseInt(e.target.value) || 0;
-                                                                setData({...data, hotel: h});
-                                                            }} className="custom-input !py-1.5 !text-xs !font-bold" />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">জন</label>
-                                                            <input type="number" placeholder="জন" value={data.hotel[room.id].count || ''} onChange={e => {
-                                                                const h = {...data.hotel};
-                                                                h[room.id].count = parseInt(e.target.value) || 0;
-                                                                setData({...data, hotel: h});
-                                                            }} className="custom-input !py-1.5 !text-xs !font-bold" />
+                                    {data.showHotel && (
+                                        <div className="mt-8 space-y-4 animate-slide-up">
+                                            <div className="flex justify-between items-center px-1">
+                                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">রুম ক্যাটাগরি</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {[
+                                                    { id: 'nonAcSingle', label: 'Non AC Single' },
+                                                    { id: 'nonAcCouple', label: 'Non AC Couple' },
+                                                    { id: 'acSingle', label: 'AC Single' },
+                                                    { id: 'acCouple', label: 'AC Couple' }
+                                                ].map(room => (
+                                                    <div key={room.id} className="p-3 bg-white/60 backdrop-blur-sm rounded-[18px] border border-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+                                                        <span className="text-[10px] font-black text-indigo-600 mb-2 block">{room.label}</span>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">৳ টাকা</label>
+                                                                <input type="number" placeholder="৳" value={data.hotel[room.id].amount || ''} onChange={e => {
+                                                                    const h = {...data.hotel};
+                                                                    h[room.id].amount = parseInt(e.target.value) || 0;
+                                                                    setData({...data, hotel: h});
+                                                                }} className="custom-input !py-1.5 !text-xs text-center !bg-indigo-50/20" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">জন</label>
+                                                                <input type="number" placeholder="০" value={data.hotel[room.id].count || ''} onChange={e => {
+                                                                    const h = {...data.hotel};
+                                                                    h[room.id].count = parseInt(e.target.value) || 0;
+                                                                    setData({...data, hotel: h});
+                                                                }} className="custom-input !py-1.5 !text-xs text-center !bg-indigo-50/20" />
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 </React.Fragment>
                         )}
                     </main>
 
                     <footer className="fixed bottom-0 left-0 right-0 p-4 max-w-md mx-auto z-[100]">
-                        <div className="bg-[#0f172a] text-white p-5 rounded-[2.5rem] shadow-2xl flex items-center justify-between border border-white/5 backdrop-blur-md">
-                            <div className="flex overflow-x-auto gap-5 no-scrollbar pr-3 flex-1 mr-3 border-r border-white/10">
-                                <div className="shrink-0">
-                                    <p className="text-[10px] font-black text-indigo-400 uppercase">রেগুলার</p>
-                                    <p className="text-lg font-black">{results.totalReg}৳</p>
+                        <div className="bg-[#1e1b4b]/95 backdrop-blur-2xl p-5 rounded-[40px] shadow-[0_20px_50px_rgba(30,27,75,0.4)] border border-white/10 flex items-center justify-between text-white overflow-hidden relative group">
+                            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
+                            <div className="flex gap-5 overflow-x-auto no-scrollbar py-2">
+                                <div className="shrink-0 group">
+                                    <p className="text-[9px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-1">রেগুলার সিট</p>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-xs font-black text-indigo-400">৳</span>
+                                        <span className="text-2xl font-black text-white">{results.totalReg}</span>
+                                    </div>
                                 </div>
                                 {data.discount1Guests > 0 && (
-                                    <div className="shrink-0 border-l border-white/5 pl-4">
-                                        <p className="text-[10px] font-black text-orange-400 uppercase">ডি {data.discount1Amount}</p>
-                                        <p className="text-lg font-black">{results.totalD1}৳</p>
+                                    <div className="shrink-0 border-l border-white/10 pl-5">
+                                        <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1">ডি {data.discount1Amount}</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xs font-black text-orange-500">৳</span>
+                                            <span className="text-xl font-black text-orange-50">{results.totalD1}</span>
+                                        </div>
                                     </div>
                                 )}
                                 {data.discount2Guests > 0 && (
-                                    <div className="shrink-0 border-l border-white/5 pl-4">
-                                        <p className="text-[10px] font-black text-amber-400 uppercase">ডি {data.discount2Amount}</p>
-                                        <p className="text-lg font-black">{results.totalD2}৳</p>
+                                    <div className="shrink-0 border-l border-white/10 pl-5">
+                                        <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">ডি {data.discount2Amount}</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xs font-black text-amber-500">৳</span>
+                                            <span className="text-xl font-black text-amber-50">{results.totalD2}</span>
+                                        </div>
                                     </div>
                                 )}
                                 {data.discount3Guests > 0 && (
-                                    <div className="shrink-0 border-l border-white/5 pl-4">
-                                        <p className="text-[10px] font-black text-amber-600 uppercase">ডি {data.discount3Amount}</p>
-                                        <p className="text-lg font-black">{results.totalD3}৳</p>
+                                    <div className="shrink-0 border-l border-white/10 pl-5">
+                                        <p className="text-[9px] font-black text-yellow-400 uppercase tracking-widest mb-1">ডি {data.discount3Amount}</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xs font-black text-yellow-500">৳</span>
+                                            <span className="text-xl font-black text-yellow-50">{results.totalD3}</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                            <div className="flex gap-3 shrink-0">
-                                <button onClick={saveTour} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></button>
-                                <button onClick={view === 'payment' ? copyBillingSummary : copyMainSummary} className="bg-indigo-600 px-6 h-12 rounded-2xl font-black text-xs uppercase shadow-lg">
-                                    {view === 'payment' ? 'BILL COPY' : 'COPY'}
+                            <div className="flex gap-2 shrink-0 ml-4">
+                                <button onClick={saveTour} className="w-12 h-12 bg-white/5 hover:bg-white/10 rounded-2xl flex items-center justify-center border border-white/10 transition-all active:scale-90 group">
+                                    <svg className="w-6 h-6 text-indigo-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                </button>
+                                <button onClick={view === 'payment' ? copyBillingSummary : copyMainSummary} className="bg-indigo-600 hover:bg-indigo-500 px-6 h-12 rounded-2xl font-black text-[10px] uppercase shadow-xl ring-4 ring-indigo-500/20 active:scale-95 transition-all text-white tracking-widest">
+                                    {view === 'payment' ? 'BILL Copy' : 'Copy'}
                                 </button>
                             </div>
                         </div>
