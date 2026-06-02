@@ -1,6 +1,6 @@
 {
-  "name": "পঙ্খিরাজ ট্রাভেল ক্যালকুলেটর",
-  "short_name": "পঙ্খিরাজ",
+  "name": "PTT Calc",
+  "short_name": "PTT Calc",
   "description": "ট্যুর খরচ এবং বাস ভাড়া হিসাব করার প্রফেশনাল ক্যালকুলেটর",
   "start_url": "index.html",
   "scope": ".",
