@@ -192,13 +192,12 @@
                 const gap3 = (Number(data.discount3Guests) || 0) * (Number(data.discount3Amount) || 0);
                 const totalGap = gap1 + gap2 + gap3;
 
-                const regularGuests = guests - (Number(data.discount1Guests) || 0) - (Number(data.discount2Guests) || 0) - (Number(data.discount3Guests) || 0);
-                const regBusAddon = regularGuests > 0 ? Math.ceil(totalGap / regularGuests) : 0;
+                const totalAddon = guests > 0 ? Math.ceil(totalGap / guests) : 0;
                 
-                const regBus = basicFare + regBusAddon;
-                const d1Bus = basicFare - (Number(data.discount1Amount) || 0);
-                const d2Bus = basicFare - (Number(data.discount2Amount) || 0);
-                const d3Bus = basicFare - (Number(data.discount3Amount) || 0);
+                const regBus = basicFare + totalAddon;
+                const d1Bus = basicFare - (Number(data.discount1Amount) || 0) + totalAddon;
+                const d2Bus = basicFare - (Number(data.discount2Amount) || 0) + totalAddon;
+                const d3Bus = basicFare - (Number(data.discount3Amount) || 0) + totalAddon;
 
                 const otherPP = data.otherExpenses.reduce((acc, ex) => {
                     return acc + (ex.guestCount > 0 ? Math.ceil(Number(ex.totalAmount) / Number(ex.guestCount)) : 0);
