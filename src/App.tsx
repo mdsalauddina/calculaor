@@ -225,7 +225,7 @@ const App = () => {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">ゲস্ট</label>
+                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">গেস্ট</label>
                                                 <input type="number" placeholder="০" value={data[`discount${n}Guests`]} onChange={e => setData({...data, [`discount${n}Guests`]: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-xs text-center !bg-white" />
                                             </div>
                                             <div>

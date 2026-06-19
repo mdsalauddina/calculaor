@@ -4,17 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e1b4b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PTT Calc">
     <title>PTT Calc</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json?v=2">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
+                navigator.serviceWorker.register(swPath)
+                    .then(reg => console.log('PTT Calc SW Registered', reg.scope))
+                    .catch(err => console.log('PTT Calc SW Registration Failed', err));
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

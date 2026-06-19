@@ -4,9 +4,11 @@
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 .animate-slide-up {
     animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
 .custom-input {
     background: #f8fafc !important;
     color: #0f172a !important;
@@ -19,11 +21,13 @@
     outline: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .custom-input:focus {
     border-color: #6366f1 !important;
     background-color: #ffffff !important;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
+
 .label-text {
     color: #64748b;
     font-size: 8px;
@@ -33,6 +37,7 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
+
 .card {
     background: white;
     border-radius: 12px;
@@ -42,17 +47,21 @@
     margin-bottom: 8px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .card:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
 }
+
 .nav-pill.active {
     background: white !important;
     color: #1e1b4b !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
+
 .btn-shadow {
     box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
 }
