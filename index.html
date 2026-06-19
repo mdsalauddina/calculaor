@@ -9,24 +9,503 @@
     <meta name="apple-mobile-web-app-title" content="PTT Calc">
     <title>PTT Calc</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=2">
     <link rel="icon" type="image/png" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/4NhywxJr/Abstract-Calculator-Logo-20260204-163855-0000.png">
     
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
-                navigator.serviceWorker.register(swPath)
-                    .then(reg => console.log('PTT Calc SW Registered', reg.scope))
-                    .catch(err => console.log('PTT Calc SW Registration Failed', err));
-            });
+    <!-- Scripts for direct browser support -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-    </script>
+        .animate-slide-up {
+            animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .custom-input {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .custom-input:focus {
+            border-color: #6366f1 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .label-text {
+            color: #64748b;
+            font-size: 8px;
+            font-weight: 900;
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            margin-bottom: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+        }
+        .nav-pill.active {
+            background: white !important;
+            color: #1e1b4b !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .btn-shadow {
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, Fragment } = React;
+
+        const INITIAL_DATA = {
+            tourName: '',
+            date: new Date().toISOString().split('T')[0],
+            totalGuests: 0,
+            busCost: 0,
+            tollTipCost: 0,
+            demurrageAmount: 0,
+            demurrageCount: 0,
+            discount1Guests: 0,
+            discount1Amount: 0,
+            discount2Guests: 0,
+            discount2Amount: 0,
+            discount3Guests: 0,
+            discount3Amount: 0,
+            otherExpenses: [],
+            companyName: 'PTT Calc',
+            billingDue: 0,
+            showHotel: false,
+            hotel: {
+                nonAcSingle: { amount: 0, count: 0 },
+                nonAcCouple: { amount: 0, count: 0 },
+                acSingle: { amount: 0, count: 0 },
+                acCouple: { amount: 0, count: 0 }
+            }
+        };
+
+        const App = () => {
+            const [data, setData] = useState(INITIAL_DATA);
+            const [history, setHistory] = useState([]);
+            const [view, setView] = useState('calc');
+            const [copied, setCopied] = useState(false);
+            const [selectedRoomType, setSelectedRoomType] = useState('none');
+
+            useEffect(() => {
+                try {
+                    const saved = localStorage.getItem('pkj_calc_github_v13');
+                    if (saved) setHistory(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to load history', e);
+                }
+            }, []);
+
+            const results = useMemo(() => {
+                const guests = Number(data.totalGuests) || 0;
+                const baseBus = (Number(data.busCost) || 0) + (Number(data.tollTipCost) || 0);
+                const demurrage = (Number(data.demurrageAmount) || 0) * (Number(data.demurrageCount) || 0);
+                const netBus = baseBus - demurrage;
+
+                const basicFare = guests > 0 ? Math.ceil(netBus / guests) : 0;
+
+                const gap1 = (Number(data.discount1Guests) || 0) * (Number(data.discount1Amount) || 0);
+                const gap2 = (Number(data.discount2Guests) || 0) * (Number(data.discount2Amount) || 0);
+                const gap3 = (Number(data.discount3Guests) || 0) * (Number(data.discount3Amount) || 0);
+                const totalGap = gap1 + gap2 + gap3;
+
+                const totalAddon = guests > 0 ? Math.ceil(totalGap / guests) : 0;
+                
+                const regBus = basicFare + totalAddon;
+                const d1Bus = basicFare - (Number(data.discount1Amount) || 0) + totalAddon;
+                const d2Bus = basicFare - (Number(data.discount2Amount) || 0) + totalAddon;
+                const d3Bus = basicFare - (Number(data.discount3Amount) || 0) + totalAddon;
+
+                const otherPP = data.otherExpenses.reduce((acc, ex) => {
+                    return acc + (ex.guestCount > 0 ? Math.ceil(Number(ex.totalAmount) / Number(ex.guestCount)) : 0);
+                }, 0);
+
+                const hotelTotals = Object.values(data.hotel).reduce((acc, h) => {
+                    return acc + (h.count > 0 ? Math.ceil(Number(h.amount) / Number(h.count)) : 0);
+                }, 0);
+
+                const pkgFare = (bus) => bus + otherPP + hotelTotals;
+
+                return {
+                    netBus,
+                    totalReg: pkgFare(regBus),
+                    totalD1: pkgFare(d1Bus),
+                    totalD2: pkgFare(d2Bus),
+                    totalD3: pkgFare(d3Bus)
+                };
+            }, [data]);
+
+            const billingSummary = useMemo(() => {
+                const busGuests = Number(data.totalGuests) || 0;
+                const d1Count = Number(data.discount1Guests) || 0;
+                const d2Count = Number(data.discount2Guests) || 0;
+                const d3Count = Number(data.discount3Guests) || 0;
+                const regCount = busGuests - d1Count - d2Count - d3Count;
+
+                const totalCost = (regCount * results.totalReg) + (d1Count * results.totalD1) + (d2Count * results.totalD2) + (d3Count * results.totalD3);
+                const pabo = totalCost - (Number(data.billingDue) || 0);
+                const bkashCharge = Math.ceil(pabo * 0.02);
+
+                return { totalCost, pabo, bkashCharge };
+            }, [data, results]);
+
+            const saveTour = () => {
+                const newHistory = [{ ...data, id: Date.now() }, ...history].slice(0, 50);
+                setHistory(newHistory);
+                localStorage.setItem('pkj_calc_github_v13', JSON.stringify(newHistory));
+                alert('হিস্ট্রিতে সেভ হয়েছে!');
+            };
+
+            const copyMainSummary = () => {
+                const totalDemurrage = (data.demurrageAmount || 0) * (data.demurrageCount || 0);
+
+                const summary = `${data.tourName || 'PTT Calc'}\nতারিখ: ${data.date}\n\n` +
+                    `বাস ও আনুষঙ্গিক: ${(Number(data.busCost) || 0) + (Number(data.tollTipCost) || 0)}\n` +
+                    `${totalDemurrage > 0 ? `ডেমারেজ বিয়োগ: -${totalDemurrage} (${data.demurrageAmount}x${data.demurrageCount})\n` : ''}` +
+                    `হিসাবযোগ্য বাস ভাড়া: ${results.netBus}\n` +
+                    `মোট গেস্ট: ${data.totalGuests}\n\n` +
+                    `রেগুলার প্যাকেজ: ${results.totalReg}৳\n` +
+                    `${data.discount1Guests > 0 ? `ডিসকাউন্ট ১ (${data.discount1Amount}৳ ছাড়): ${results.totalD1}৳ (${data.discount1Guests} জন)\n` : ''}` +
+                    `${data.discount2Guests > 0 ? `ডিসকাউন্ট ২ (${data.discount2Amount}৳ ছাড়): ${results.totalD2}৳ (${data.discount2Guests} জন)\n` : ''}` +
+                    `${data.discount3Guests > 0 ? `ডিসকাউন্ট ৩ (${data.discount3Amount}৳ ছাড়): ${results.totalD3}৳ (${data.discount3Guests} জন)\n` : ''}\n` +
+                    `ধন্যবাদান্তে-\n${data.companyName}`;
+
+                navigator.clipboard.writeText(summary);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            const copyBillingSummary = () => {
+                const busGuests = Number(data.totalGuests) || 0;
+                const d1Count = Number(data.discount1Guests) || 0;
+                const d2Count = Number(data.discount2Guests) || 0;
+                const d3Count = Number(data.discount3Guests) || 0;
+                const regCount = busGuests - d1Count - d2Count - d3Count;
+
+                const summary = `পেমেন্ট সামারি: ${data.tourName || ''}\n` +
+                    `---------------------------\n` +
+                    `${regCount > 0 ? `রেগুলার: ${regCount} জন × ${results.totalReg} = ${regCount * results.totalReg}৳\n` : ''}` +
+                    `${d1Count > 0 ? `ডিসকাউন্ট ১: ${d1Count} জন × ${results.totalD1} = ${d1Count * results.totalD1}৳\n` : ''}` +
+                    `${d2Count > 0 ? `ডিসকাউন্ট ২: ${d2Count} জন × ${results.totalD2} = ${d2Count * results.totalD2}৳\n` : ''}` +
+                    `${d3Count > 0 ? `ডিসকাউন্ট ৩: ${d3Count} জন × ${results.totalD3} = ${d3Count * results.totalD3}৳\n` : ''}` +
+                    `---------------------------\n` +
+                    `মোট খরচ: ${billingSummary.totalCost}৳\n` +
+                    `জমা/পেইড: ${data.billingDue || 0}৳\n` +
+                    `---------------------------\n` +
+                    `বকেয়া/পাবো: ${billingSummary.pabo}৳\n` +
+                    `(+বিকাশ খরচ: ${billingSummary.bkashCharge}৳)\n\n` +
+                    `ধন্যবাদান্তে-\n${data.companyName}`;
+
+                navigator.clipboard.writeText(summary);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="min-h-screen max-w-md mx-auto bg-slate-50 flex flex-col relative pb-32">
+                    <header className="bg-gradient-to-br from-[#1e1b4b] to-[#312e81] text-white p-4 flex justify-between items-center shadow-2xl sticky top-0 z-50 rounded-b-[24px]">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-1.5 rounded-lg shadow-lg ring-1 ring-white/20">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <h1 className="text-base font-black tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">PTT Calc</h1>
+                        </div>
+                        <div className="flex bg-indigo-950/40 p-0.5 rounded-xl border border-white/10 backdrop-blur-md">
+                            <button onClick={() => setView('calc')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'calc' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>হিসাব</button>
+                            <button onClick={() => setView('payment')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'payment' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>পেমেন্ট</button>
+                            <button onClick={() => setView('history')} className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all nav-pill ${view === 'history' ? 'active !py-1.5' : 'text-indigo-300 hover:text-white'}`}>হিস্ট্রি</button>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 p-4 pb-20">
+                        {view === 'calc' ? (
+                            <div className="space-y-4">
+                                <div className="card border-l-4 border-l-indigo-500 animate-slide-up">
+                                    <div className="flex justify-between items-center mb-5 border-b border-slate-50 pb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">ট্যুর ইনফো</span>
+                                        </div>
+                                        <button onClick={() => window.confirm('সব মুছতে চান?') && setData(INITIAL_DATA)} className="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">Reset</button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="label-text">ট্যুরের নাম</label>
+                                            <input type="text" placeholder="যেমন: বান্দরবান ডে" value={data.tourName} onChange={e => setData({...data, tourName: e.target.value})} className="custom-input shadow-sm" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="label-text">মোট গেস্ট</label>
+                                                <input type="number" value={data.totalGuests || ''} onChange={e => setData({...data, totalGuests: parseInt(e.target.value) || 0})} className="custom-input shadow-sm text-center" />
+                                            </div>
+                                            <div>
+                                                <label className="label-text">তারিখ</label>
+                                                <input type="date" value={data.date} onChange={e => setData({...data, date: e.target.value})} className="custom-input shadow-sm" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="card bg-white border-indigo-100 border shadow-sm animate-slide-up">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+                                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">বাস ও ট্রান্সপোর্ট</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div>
+                                            <label className="label-text">বাস ভাড়া</label>
+                                            <input type="number" value={data.busCost || ''} onChange={e => setData({...data, busCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-50 !bg-indigo-50/10" />
+                                        </div>
+                                        <div>
+                                            <label className="label-text">টোল ও বকশিশ</label>
+                                            <input type="number" value={data.tollTipCost || ''} onChange={e => setData({...data, tollTipCost: parseInt(e.target.value) || 0})} className="custom-input !border-indigo-50 !bg-indigo-50/10" />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 mb-4 group">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase mb-2 block text-center">ডেমারেজ (বিয়োগ)</span>
+                                        <div className="flex gap-2">
+                                            <input type="number" placeholder="সংখ্যা" value={data.demurrageCount || ''} onChange={e => setData({...data, demurrageCount: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-sm text-center" />
+                                            <div className="flex items-center text-slate-300 font-black">×</div>
+                                            <input type="number" placeholder="টাকা" value={data.demurrageAmount || ''} onChange={e => setData({...data, demurrageAmount: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-sm text-center" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {[1, 2, 3].map(n => (
+                                            <div key={n} className="bg-orange-50/40 p-3 rounded-2xl border border-orange-100/50">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-[9px] font-black text-orange-600 uppercase">ডিসকাউন্ট স্লট {n}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">গেস্ট</label>
+                                                        <input type="number" placeholder="০" value={data[`discount${n}Guests`]} onChange={e => setData({...data, [`discount${n}Guests`]: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-xs text-center !bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">ছাড়</label>
+                                                        <input type="number" placeholder="৳" value={data[`discount${n}Amount`]} onChange={e => setData({...data, [`discount${n}Amount`]: parseInt(e.target.value) || 0})} className="custom-input !py-1.5 !text-xs text-center !bg-white" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="card animate-slide-up">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-4 bg-cyan-500 rounded-full"></div>
+                                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">অন্যান্য খরচ</span>
+                                        </div>
+                                        <button onClick={() => setData({...data, otherExpenses: [...data.otherExpenses, { id: Date.now().toString(), name: '', totalAmount: 0, guestCount: data.totalGuests }]})} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">+ Add</button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {data.otherExpenses.map((ex, idx) => (
+                                            <div key={ex.id} className="p-3 bg-slate-50 rounded-[18px] border border-slate-100 relative group">
+                                                <button onClick={() => setData({...data, otherExpenses: data.otherExpenses.filter(i => i.id !== ex.id)})} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white text-rose-500 rounded-full shadow-sm flex items-center justify-center border border-rose-50">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                </button>
+                                                <div className="mb-3">
+                                                    <input type="text" placeholder="খরচের নাম" value={ex.name} onChange={e => { const items = [...data.otherExpenses]; items[idx].name = e.target.value; setData({...data, otherExpenses: items}) }} className="font-black text-sm outline-none bg-transparent w-full border-b border-slate-200 focus:border-indigo-500 transition-colors pb-1" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase">৳ টাকা</label>
+                                                        <input type="number" placeholder="৳" value={ex.totalAmount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].totalAmount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs !bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase">জন</label>
+                                                        <input type="number" placeholder="জন" value={ex.guestCount || ''} onChange={e => { const items = [...data.otherExpenses]; items[idx].guestCount = parseInt(e.target.value) || 0; setData({...data, otherExpenses: items}) }} className="custom-input !py-1.5 !text-xs !bg-white" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="card border-l-4 border-l-purple-500 animate-slide-up">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-6 bg-purple-500 rounded-full"></div>
+                                            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">হোটেল ও আবাসন</span>
+                                        </div>
+                                        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                            <button onClick={() => setData({...data, showHotel: false})} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!data.showHotel ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400'}`}>বন্ধ</button>
+                                            <button onClick={() => setData({...data, showHotel: true})} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${data.showHotel ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400'}`}>চালু</button>
+                                        </div>
+                                    </div>
+
+                                    {data.showHotel && (
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                                {[
+                                                    { id: 'nonAcSingle', label: 'Non-AC Single' },
+                                                    { id: 'nonAcCouple', label: 'Non-AC Couple' },
+                                                    { id: 'acSingle', label: 'AC Single' },
+                                                    { id: 'acCouple', label: 'AC Couple' }
+                                                ].map(room => (
+                                                    <div key={room.id} className="p-3 bg-white/60 backdrop-blur-sm rounded-[18px] border border-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+                                                        <span className="text-[10px] font-black text-indigo-600 mb-2 block">{room.label}</span>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">৳ টাকা</label>
+                                                                <input type="number" placeholder="৳" value={data.hotel[room.id].amount || ''} onChange={e => {
+                                                                    const h = {...data.hotel};
+                                                                    h[room.id].amount = parseInt(e.target.value) || 0;
+                                                                    setData({...data, hotel: h});
+                                                                }} className="custom-input !py-1.5 !text-xs text-center !bg-indigo-50/20" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[8px] font-black text-slate-400 mb-1 block uppercase text-center">জন</label>
+                                                                <input type="number" placeholder="০" value={data.hotel[room.id].count || ''} onChange={e => {
+                                                                    const h = {...data.hotel};
+                                                                    h[room.id].count = parseInt(e.target.value) || 0;
+                                                                    setData({...data, hotel: h});
+                                                                }} className="custom-input !py-1.5 !text-xs text-center !bg-indigo-50/20" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50 flex justify-between items-center">
+                                                <span className="text-[10px] font-black text-purple-600 uppercase">হোটেল টোটাল (PP)</span>
+                                                <span className="text-xl font-black text-purple-900">৳{Object.values(data.hotel).reduce((acc, h) => acc + (h.count > 0 ? Math.ceil(h.amount / h.count) : 0), 0)}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : view === 'payment' ? (
+                            <Fragment>
+                                <div className="space-y-6">
+                                    <div className="card animate-slide-up">
+                                        <div className="flex items-center gap-2 mb-6">
+                                            <div className="w-2 h-6 bg-indigo-600 rounded-full"></div>
+                                            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">পেমেন্ট রিসিট মেকার</span>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <label className="label-text">প্রতিষ্ঠান/নাম</label>
+                                            <input type="text" placeholder="যেমন: পকেট ট্যুর" value={data.companyName} onChange={e => setData({...data, companyName: e.target.value})} className="custom-input !border-indigo-200" />
+                                        </div>
+
+                                        <div className="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md">
+                                            <div className="flex justify-between items-center mb-4 border-b border-indigo-50 pb-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase">মোট খরচ</span>
+                                                    <span className="text-[10px] font-bold text-indigo-400 truncate max-w-[150px]">
+                                                        {data.companyName || 'পেমেন্ট'} {data.tourName ? `- ${data.tourName}` : ''}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xl font-black text-indigo-900">৳{billingSummary.totalCost}</span>
+                                            </div>
+                                            <div className="mb-4">
+                                                <label className="label-text">জমা দেওয়া টাকা (Advance/Paid)</label>
+                                                <input type="number" value={data.billingDue || ''} onChange={e => setData({...data, billingDue: parseInt(e.target.value) || 0})} className="custom-input !bg-rose-50/30 !border-rose-100" placeholder="কত জমা আছে?" />
+                                            </div>
+                                            <div className="mt-4 space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-black text-slate-600 uppercase">পাবো (Pabo):</span>
+                                                    <span className="text-2xl font-black text-indigo-600">৳{billingSummary.pabo}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400">bKash Charge:</span>
+                                                    <span className="text-xs font-black text-slate-500">৳{billingSummary.bkashCharge}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button onClick={copyBillingSummary} className="w-full mt-6 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 btn-shadow active:scale-[0.98] transition-all">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                            Copy Billing Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </Fragment>
+                        ) : (
+                            <div className="space-y-4">
+                                {history.map(item => (
+                                    <div key={item.id} onClick={() => { setData(item); setView('calc'); }} className="card !p-5 flex justify-between items-center cursor-pointer active:scale-[0.98] hover:border-indigo-200 transition-all">
+                                        <div className="flex-1">
+                                            <h4 className="font-black text-slate-900 text-base">{item.tourName || 'Unnamed Tour'}</h4>
+                                            <p className="text-[10px] font-black text-indigo-500 mt-1 uppercase tracking-tighter">{item.date} • {item.totalGuests} গেস্ট</p>
+                                        </div>
+                                        <button onClick={(e) => { e.stopPropagation(); if(window.confirm('ডিলিট করতে চান?')) setHistory(history.filter(h => h.id !== item.id)) }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className="fixed bottom-0 left-0 right-0 p-4 max-w-md mx-auto z-[100]">
+                        <div className="bg-[#0f172a] text-white p-5 rounded-[2.5rem] shadow-2xl flex items-center justify-between border border-white/5 backdrop-blur-md">
+                            <div className="flex overflow-x-auto gap-5 no-scrollbar pr-3 flex-1 mr-3 border-r border-white/10">
+                                <div className="shrink-0">
+                                    <p className="text-[10px] font-black text-indigo-400 uppercase">রেগুলার</p>
+                                    <p className="text-lg font-black">{results.totalReg}৳</p>
+                                </div>
+                                {data.discount1Guests > 0 && (
+                                    <div className="shrink-0 border-l border-white/5 pl-4">
+                                        <p className="text-[10px] font-black text-orange-400 uppercase">ডি {data.discount1Amount}</p>
+                                        <p className="text-lg font-black">{results.totalD1}৳</p>
+                                    </div>
+                                )}
+                                {data.discount2Guests > 0 && (
+                                    <div className="shrink-0 border-l border-white/5 pl-4">
+                                        <p className="text-[10px] font-black text-amber-400 uppercase">ডি {data.discount2Amount}</p>
+                                        <p className="text-lg font-black">{results.totalD2}৳</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex gap-3 shrink-0">
+                                <button onClick={saveTour} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></button>
+                                <button onClick={copyMainSummary} className="bg-indigo-600 px-6 h-12 rounded-2xl font-black text-xs uppercase shadow-lg">COPY</button>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {copied && <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0f172a] text-white px-10 py-4 rounded-3xl text-sm font-black shadow-2xl z-[200]">কপি হয়েছে!</div>}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
