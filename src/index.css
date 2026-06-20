@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+        body { 
+            font-family: 'Hind Siliguri', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        .custom-input {
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .custom-input:focus {
+            border-color: #6366f1 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .label-text {
+            color: #64748b;
+            font-size: 8px;
+            font-weight: 900;
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            margin-bottom: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .btn-shadow {
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+        }
+        .nav-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-pill.active {
+            background: white;
+            color: #1e1b4b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: scale(1.05);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out forwards;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+    
